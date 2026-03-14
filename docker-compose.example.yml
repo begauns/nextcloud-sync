@@ -1,0 +1,33 @@
+services:
+  nextcloud-sync:
+    image: ghcr.io/DEINUSER/nextcloud-sync:latest
+    container_name: nextcloud-sync
+    restart: always
+
+    environment:
+      NC_URL: "https://cloud.example.com"
+      NC_USER: "your-nextcloud-user"
+      NC_PASS: "your-nextcloud-password"
+      NC_SOURCE_DIR: "/media/nextcloud"
+
+      USER_UID: "1000"
+      USER_GID: "1000"
+
+      NC_PATH: ""
+      NC_NON_INTERACTIVE: "1"
+      NC_SILENT: "false"
+      NC_TRUST_CERT: "false"
+      NC_HIDDEN: "false"
+      NC_MAX_SYNC_RETRIES: "5"
+      NC_EXCLUDE_FILE: "/config/exclude.lst"
+      NC_UNSYNCED_FILE: "/config/unsynced.lst"
+      NC_HTTPPROXY: ""
+      NC_INTERVAL: "300"
+      NC_EXIT: "false"
+      TZ: "Europe/Berlin"
+
+    volumes:
+      - /pfad/zu/deinen/daten:/media/nextcloud
+      - ./config:/config:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
