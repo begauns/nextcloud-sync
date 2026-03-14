@@ -1,6 +1,6 @@
 services:
   nextcloud-sync:
-    image: ghcr.io/DEINUSER/nextcloud-sync:latest
+    image: ghcr.io/begauns/nextcloud-sync:latest
     container_name: nextcloud-sync
     restart: always
 
