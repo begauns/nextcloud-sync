@@ -122,9 +122,15 @@ run_sync_root() {
 
     log "[ info entrypoint ]: [root] Syncing ${NC_SOURCE_DIR} → ${NC_URL} as ${RUN_AS_USER} (${TARGET_UID}:${TARGET_GID}) ..."
 
-    # Kommando als Array aufbauen und sicher an su übergeben
-    local cmd=(nextcloudcmd "${ARGS[@]}" "${NC_SOURCE_DIR}" "${NC_URL}")
-    su "${RUN_AS_USER}" -s /bin/bash -c "$(printf '%q ' "${cmd[@]}")"
+    # Kommandozeile als String bauen (korrekt gequotet)
+    CMD="nextcloudcmd"
+    for arg in "${ARGS[@]}"; do
+      CMD+=" $(printf '%q' "${arg}")"
+    done
+    CMD+=" $(printf '%q' "${NC_SOURCE_DIR}") $(printf '%q' "${NC_URL}")"
+
+    log "[ debug entrypoint ]: running as ${RUN_AS_USER}: ${CMD}"
+    su -s /bin/bash "${RUN_AS_USER}" -c "${CMD}"
 
     cleanup_unsynced_list
 }
