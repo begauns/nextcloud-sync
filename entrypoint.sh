@@ -10,7 +10,7 @@ log() {
 
 cleanup_unsynced_list() {
   # Entfernt Einträge aus unsynced.lst, die "database is locked" auslösen
-  if [ -f "${NC_LOGFILE}" ] && [ -f "${NC_UNSYNCED_FILE}" ]; then
+  if [ -f "${NC_LOGFILE}" ] && [ -n "${NC_UNSYNCED_FILE}" ] && [ -f "${NC_UNSYNCED_FILE}" ]; then
     grep "SQL error when inserting into selective sync" "${NC_LOGFILE}" 2>/dev/null \
       | sed 's/.*selective sync 1 "\(.*\/\)" "database is locked".*/\1/' \
       | while read bad; do
@@ -23,7 +23,9 @@ export TZ=${TZ:-Europe/Berlin}
 log "[ info entrypoint ]: Using timezone: ${TZ}"
 log "[ info entrypoint ]: Running as UID: $(id -u), GID: $(id -g)"
 
-# Rootless-Modus: Container läuft NICHT als root
+########################################
+# Rootless-Modus
+########################################
 if [ "$(id -u)" != "0" ]; then
   log "[ info entrypoint ]: detected rootless mode (no UID 0) – running directly as current user"
 
@@ -63,7 +65,9 @@ if [ "$(id -u)" != "0" ]; then
   done
 fi
 
-# Ab hier: Root-Modus (id -u == 0)
+########################################
+# Root-Modus
+########################################
 
 # USER_UID / USER_GID müssen in Root-Modus gesetzt sein
 if [ -z "${USER_UID}" ] || [ -z "${USER_GID}" ]; then
@@ -118,13 +122,9 @@ run_sync_root() {
 
     log "[ info entrypoint ]: [root] Syncing ${NC_SOURCE_DIR} → ${NC_URL} as ${RUN_AS_USER} (${TARGET_UID}:${TARGET_GID}) ..."
 
-    CMD="nextcloudcmd"
-    for arg in "${ARGS[@]}"; do
-      CMD+=" \"${arg}\""
-    done
-    CMD+=" \"${NC_SOURCE_DIR}\" \"${NC_URL}\""
-
-    su -s /bin/bash "${RUN_AS_USER}" -c "${CMD}"
+    # Kommando als Array aufbauen und sicher an su übergeben
+    local cmd=(nextcloudcmd "${ARGS[@]}" "${NC_SOURCE_DIR}" "${NC_URL}")
+    su "${RUN_AS_USER}" -s /bin/bash -c "$(printf '%q ' "${cmd[@]}")"
 
     cleanup_unsynced_list
 }
