@@ -7,7 +7,7 @@ Intervall-Sync, Exclude-/Unsynced-Listen und flexiblem UID/GID-Mapping
 
 **Image:** `ghcr.io/begauns/nextcloud-sync:latest`
 
-------------------------------------------------------------------------
+---
 
 ## Image verwenden
 
@@ -24,10 +24,11 @@ cd nextcloud-sync
 cp docker-compose.example.yml docker-compose.yml
 nano docker-compose.yml
 ```
-- NC_URL, NC_USER, NC_PASS, NC_SOURCE_DIR anpassen
-- Host-Pfade für `/media/nextcloud` und `/config` setzen
-- Bei OMV/klassischem Docker: `USER_UID`/`USER_GID` setzen, kein `user:` im Service
-- Bei rootless: `user:` setzen, `USER_UID`/`USER_GID` weglassen
+
+* NC_URL, NC_USER, NC_PASS, NC_SOURCE_DIR anpassen
+* Host-Pfade für `/media/nextcloud` und `/config` setzen
+* Bei OMV/klassischem Docker: `USER_UID`/`USER_GID` setzen, kein `user:` im Service
+* Bei rootless: `user:` setzen, `USER_UID`/`USER_GID` weglassen
 
 ### 3. Container starten
 
@@ -36,7 +37,97 @@ docker compose up -d
 docker compose logs -f
 ```
 
-------------------------------------------------------------------------
+### 4. Alternativ: Manuelle Einrichtung ohne git clone
+
+Falls du das Repository nicht klonen möchtest, kannst du die `docker-compose.yml`
+auch selbst anlegen und das Config-Verzeichnis manuell erstellen.
+
+#### 4.1 Verzeichnisse auf dem Host anlegen
+
+```bash
+mkdir -p /pfad/zu/deinen/daten
+mkdir -p /pfad/zu/nextcloud-sync/config
+```
+
+Beispiel-Konfigurationsdateien anlegen:
+
+```bash
+cat > /pfad/zu/nextcloud-sync/config/exclude.lst << 'EOF'
+# Beispiel: alles .tmp und .bak ignorieren
+*.tmp
+*.bak
+# node_modules-Verzeichnisse ignorieren
+node_modules/
+EOF
+
+cat > /pfad/zu/nextcloud-sync/config/unsynced.lst << 'EOF'
+# Beispiel: große oder selten genutzte Ordner nicht syncen
+huge-archive/
+old-backups/
+downloads/
+Photos/
+EOF
+```
+
+Hinweis: Die Ordner in `unsynced.lst` müssen auf dem Server existieren.
+Gelöschte/umbenannte Einträge können zu `database is locked` in der lokalen
+Sync-Datenbank führen. In diesem Fall `unsynced.lst` aufräumen und `.sync_*.db`
+im Datenordner löschen, dann einmal neu synchronisieren.[web:172][web:176]
+
+#### 4.2 Eigene docker-compose.yml erstellen
+
+```bash
+nano docker-compose.yml
+```
+
+Minimalbeispiel (Root-Modus, z.B. OMV):
+
+```yaml
+services:
+  nextcloud-sync:
+    image: ghcr.io/begauns/nextcloud-sync:latest
+    container_name: nextcloud-sync
+    restart: always
+
+    environment:
+      # Pflicht-Parameter
+      NC_URL: "https://cloud.example.com"
+      NC_USER: "your-nextcloud-user"
+      NC_PASS: "your-nextcloud-password"
+      NC_SOURCE_DIR: "/media/nextcloud"
+
+      # Nur im Root-Modus nötig (Host-UID/GID)
+      USER_UID: "1000"
+      USER_GID: "1000"
+
+      # Optionale CLI-Flags
+      NC_NON_INTERACTIVE: "1"
+      NC_SILENT: "false"
+      NC_TRUST_CERT: "false"
+      NC_HIDDEN: "false"
+      NC_MAX_SYNC_RETRIES: "5"
+      NC_EXCLUDE_FILE: "/config/exclude.lst"
+      NC_UNSYNCED_FILE: "/config/unsynced.lst"
+      NC_HTTPPROXY: ""
+      NC_INTERVAL: "300"
+      NC_EXIT: "false"
+      TZ: "Europe/Berlin"
+
+    volumes:
+      - /pfad/zu/deinen/daten:/media/nextcloud
+      - /pfad/zu/nextcloud-sync/config:/config:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+```
+
+#### 4.3 Container starten
+
+```bash
+docker compose up -d
+docker compose logs -f
+```
+
+---
 
 ## Pflicht-Variablen (Sync-Parameter)
 
