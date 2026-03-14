@@ -5,7 +5,7 @@ Verzeichnis gegen eine Nextcloud-Instanz synchronisiert -- inkl.
 Intervall-Sync, Exclude-/Unsynced-Listen und flexiblem UID/GID-Mapping
 (Root + Rootless).
 
-**Image:** `ghcr.io/DEINUSER/nextcloud-sync:latest`
+**Image:** `ghcr.io/begauns/nextcloud-sync:latest`
 
 ------------------------------------------------------------------------
 
@@ -185,8 +185,8 @@ Beispiel:
 
 ``` yaml
 environment:
-  USER_UID: "1004"
-  USER_GID: "100"
+  USER_UID: "1000"
+  USER_GID: "1000"
 ```
 
 **Wichtig:** In diesem Modus kein `user:` im Compose setzen, damit der
@@ -219,7 +219,7 @@ Im Compose kannst du optional `user:` setzen:
 ``` yaml
 services:
   nextcloud-sync:
-    image: ghcr.io/DEINUSER/nextcloud-sync:latest
+    image: ghcr.io/begauns/nextcloud-sync:latest
     user: "${UID}:${GID}"
     environment:
       NC_URL: "https://cloud.example.com"
@@ -243,7 +243,7 @@ services:
 ``` yaml
 services:
   nextcloud-sync:
-    image: ghcr.io/DEINUSER/nextcloud-sync:latest
+    image: ghcr.io/begauns/nextcloud-sync:latest
     container_name: nextcloud-sync
     restart: always
 
@@ -292,7 +292,7 @@ services:
 
 ## Kurz: Image + Nutzung
 
-**Image:** `ghcr.io/DEINUSER/nextcloud-sync:latest`
+**Image:** `ghcr.io/begauns/nextcloud-sync:latest`
 
 Nutzung:
 
