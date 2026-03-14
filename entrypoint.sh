@@ -2,9 +2,21 @@
 set -e
 
 LOG_DATE_FORMAT="%m-%d %H:%M:%S"
+NC_LOGFILE=${NC_LOGFILE:-/config/nextcloud.log}
 
 log() {
   echo "$(date +"${LOG_DATE_FORMAT}") $*"
+}
+
+cleanup_unsynced_list() {
+  # Entfernt Einträge aus unsynced.lst, die "database is locked" auslösen
+  if [ -f "${NC_LOGFILE}" ] && [ -f "${NC_UNSYNCED_FILE}" ]; then
+    grep "SQL error when inserting into selective sync" "${NC_LOGFILE}" 2>/dev/null \
+      | sed 's/.*selective sync 1 "\(.*\/\)" "database is locked".*/\1/' \
+      | while read bad; do
+          [ -n "${bad}" ] && sed -i "\|^${bad}\$|d" "${NC_UNSYNCED_FILE}"
+        done
+  fi
 }
 
 export TZ=${TZ:-Europe/Berlin}
@@ -29,6 +41,7 @@ if [ "$(id -u)" != "0" ]; then
       [ -n "${NC_UNSYNCED_FILE}" ]        && ARGS+=(--unsyncedfolders "${NC_UNSYNCED_FILE}")
       [ -n "${NC_MAX_SYNC_RETRIES}" ]     && ARGS+=(--max-sync-retries "${NC_MAX_SYNC_RETRIES}")
       [[ "${NC_HIDDEN}" != "false" && "${NC_HIDDEN}" != "" ]] && ARGS+=(-h)
+      [ -n "${NC_LOGFILE}" ]              && ARGS+=(--logfile "${NC_LOGFILE}")
 
       if [ -z "${NC_SOURCE_DIR}" ] || [ -z "${NC_URL}" ]; then
           log "[ error entrypoint ]: NC_SOURCE_DIR und NC_URL müssen gesetzt sein."
@@ -37,6 +50,8 @@ if [ "$(id -u)" != "0" ]; then
 
       log "[ info entrypoint ]: [rootless] Syncing ${NC_SOURCE_DIR} → ${NC_URL} ..."
       nextcloudcmd "${ARGS[@]}" "${NC_SOURCE_DIR}" "${NC_URL}"
+
+      cleanup_unsynced_list
   }
 
   INTERVAL=${NC_INTERVAL:-300}
@@ -94,6 +109,7 @@ run_sync_root() {
     [ -n "${NC_UNSYNCED_FILE}" ]        && ARGS+=(--unsyncedfolders "${NC_UNSYNCED_FILE}")
     [ -n "${NC_MAX_SYNC_RETRIES}" ]     && ARGS+=(--max-sync-retries "${NC_MAX_SYNC_RETRIES}")
     [[ "${NC_HIDDEN}" != "false" && "${NC_HIDDEN}" != "" ]] && ARGS+=(-h)
+    [ -n "${NC_LOGFILE}" ]              && ARGS+=(--logfile "${NC_LOGFILE}")
 
     if [ -z "${NC_SOURCE_DIR}" ] || [ -z "${NC_URL}" ]; then
         log "[ error entrypoint ]: NC_SOURCE_DIR und NC_URL müssen gesetzt sein."
@@ -109,6 +125,8 @@ run_sync_root() {
     CMD+=" \"${NC_SOURCE_DIR}\" \"${NC_URL}\""
 
     su -s /bin/bash "${RUN_AS_USER}" -c "${CMD}"
+
+    cleanup_unsynced_list
 }
 
 INTERVAL=${NC_INTERVAL:-300}
