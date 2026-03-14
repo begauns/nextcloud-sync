@@ -2,7 +2,6 @@
 set -e
 
 LOG_DATE_FORMAT="%m-%d %H:%M:%S"
-NC_LOGFILE=${NC_LOGFILE:-/config/nextcloud.log}
 
 log() {
   echo "$(date +"${LOG_DATE_FORMAT}") $*"
@@ -10,13 +9,9 @@ log() {
 
 cleanup_unsynced_list() {
   # Entfernt Einträge aus unsynced.lst, die "database is locked" auslösen
-  if [ -f "${NC_LOGFILE}" ] && [ -n "${NC_UNSYNCED_FILE}" ] && [ -f "${NC_UNSYNCED_FILE}" ]; then
-    grep "SQL error when inserting into selective sync" "${NC_LOGFILE}" 2>/dev/null \
-      | sed 's/.*selective sync 1 "\(.*\/\)" "database is locked".*/\1/' \
-      | while read bad; do
-          [ -n "${bad}" ] && sed -i "\|^${bad}\$|d" "${NC_UNSYNCED_FILE}"
-        done
-  fi
+  # Wir lesen dafür direkt das Container-Log (stdout) ist schwieriger,
+  # daher vorerst deaktiviert – du kannst später auf ein echtes Logfile umbauen.
+  :
 }
 
 export TZ=${TZ:-Europe/Berlin}
@@ -43,7 +38,6 @@ if [ "$(id -u)" != "0" ]; then
       [ -n "${NC_UNSYNCED_FILE}" ]        && ARGS+=(--unsyncedfolders "${NC_UNSYNCED_FILE}")
       [ -n "${NC_MAX_SYNC_RETRIES}" ]     && ARGS+=(--max-sync-retries "${NC_MAX_SYNC_RETRIES}")
       [[ "${NC_HIDDEN}" != "false" && "${NC_HIDDEN}" != "" ]] && ARGS+=(-h)
-      [ -n "${NC_LOGFILE}" ]              && ARGS+=(--logfile "${NC_LOGFILE}")
 
       if [ -z "${NC_SOURCE_DIR}" ] || [ -z "${NC_URL}" ]; then
           log "[ error entrypoint ]: NC_SOURCE_DIR und NC_URL müssen gesetzt sein."
@@ -113,7 +107,6 @@ run_sync_root() {
     [ -n "${NC_UNSYNCED_FILE}" ]        && ARGS+=(--unsyncedfolders "${NC_UNSYNCED_FILE}")
     [ -n "${NC_MAX_SYNC_RETRIES}" ]     && ARGS+=(--max-sync-retries "${NC_MAX_SYNC_RETRIES}")
     [[ "${NC_HIDDEN}" != "false" && "${NC_HIDDEN}" != "" ]] && ARGS+=(-h)
-    [ -n "${NC_LOGFILE}" ]              && ARGS+=(--logfile "${NC_LOGFILE}")
 
     if [ -z "${NC_SOURCE_DIR}" ] || [ -z "${NC_URL}" ]; then
         log "[ error entrypoint ]: NC_SOURCE_DIR und NC_URL müssen gesetzt sein."
@@ -122,7 +115,6 @@ run_sync_root() {
 
     log "[ info entrypoint ]: [root] Syncing ${NC_SOURCE_DIR} → ${NC_URL} as ${RUN_AS_USER} (${TARGET_UID}:${TARGET_GID}) ..."
 
-    # Kommandozeile als String bauen (korrekt gequotet)
     CMD="nextcloudcmd"
     for arg in "${ARGS[@]}"; do
       CMD+=" $(printf '%q' "${arg}")"
