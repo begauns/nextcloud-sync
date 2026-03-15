@@ -1,4 +1,7 @@
-huge-archive/
-old-backups/
-downloads/
+# Standard-Unsynced-Liste (bewusst leer gelassen).
+# Hier kannst du Root-Ordner (relativ zum Nextcloud-Home) eintragen, z.B.:
+# huge-archive/
+# old-backups/
+# downloads/
+# photos/
 

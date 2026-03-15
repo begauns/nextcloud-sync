@@ -1,6 +1,13 @@
-.DS_Store
-Thumbs.db
+# Standard-Exclude-Liste für nextcloudcmd
 *.tmp
+*.temp
+*.swp
+*.bak
+~$*
+.~lock.*
 node_modules/
+dist/
 .cache/
+.idea/
+.vscode/
 
