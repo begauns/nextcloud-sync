@@ -49,30 +49,22 @@ mkdir -p /pfad/zu/deinen/daten
 mkdir -p /pfad/zu/nextcloud-sync/config
 ```
 
-Beispiel-Konfigurationsdateien anlegen:
+Beim ersten Start kopiert der Container die im Image enthaltenen Standarddateien nach `/config`:
+
+- `/pfad/zu/nextcloud-sync/config/exclude.lst`
+- `/pfad/zu/nextcloud-sync/config/unsynced.lst`
+
+Diese kannst du später einfach anpassen:
 
 ```bash
-cat > /pfad/zu/nextcloud-sync/config/exclude.lst << 'EOF'
-# Beispiel: alles .tmp und .bak ignorieren
-*.tmp
-*.bak
-# node_modules-Verzeichnisse ignorieren
-node_modules/
-EOF
-
-cat > /pfad/zu/nextcloud-sync/config/unsynced.lst << 'EOF'
-# Beispiel: große oder selten genutzte Ordner nicht syncen
-huge-archive/
-old-backups/
-downloads/
-Photos/
-EOF
+nano /pfad/zu/nextcloud-sync/config/exclude.lst
+nano /pfad/zu/nextcloud-sync/config/unsynced.lst
 ```
 
 Hinweis: Die Ordner in `unsynced.lst` müssen auf dem Server existieren.
-Gelöschte/umbenannte Einträge können zu `database is locked` in der lokalen
+Gelöschte oder umbenannte Einträge können zu `database is locked` in der lokalen
 Sync-Datenbank führen. In diesem Fall `unsynced.lst` aufräumen und `.sync_*.db`
-im Datenordner löschen, dann einmal neu synchronisieren.[web:172][web:176]
+im Datenordner löschen, dann einmal neu synchronisieren.
 
 #### 4.2 Eigene docker-compose.yml erstellen
 

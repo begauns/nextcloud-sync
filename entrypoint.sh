@@ -7,12 +7,28 @@ log() {
   echo "$(date +"${LOG_DATE_FORMAT}") $*"
 }
 
+# Standard-Konfigurationsdateien in /config bereitstellen, falls nicht vorhanden
+init_config_defaults() {
+  if [ -d /config ]; then
+    if [ ! -f /config/exclude.lst ] && [ -f /defaults-config/exclude.lst ]; then
+      log "[ info entrypoint ]: initializing /config/exclude.lst from image defaults"
+      cp /defaults-config/exclude.lst /config/exclude.lst
+    fi
+    if [ ! -f /config/unsynced.lst ] && [ -f /defaults-config/unsynced.lst ]; then
+      log "[ info entrypoint ]: initializing /config/unsynced.lst from image defaults"
+      cp /defaults-config/unsynced.lst /config/unsynced.lst
+    fi
+  else
+    log "[ warn entrypoint ]: /config directory not found (no config volume mounted?)"
+  fi
+}
+
 cleanup_unsynced_list() {
-  # Entfernt Einträge aus unsynced.lst, die "database is locked" auslösen
-  # Wir lesen dafür direkt das Container-Log (stdout) ist schwieriger,
-  # daher vorerst deaktiviert – du kannst später auf ein echtes Logfile umbauen.
+  # Platzhalter: hier könntest du später problematische unsynced-Einträge bereinigen
   :
 }
+
+init_config_defaults
 
 export TZ=${TZ:-Europe/Berlin}
 log "[ info entrypoint ]: Using timezone: ${TZ}"

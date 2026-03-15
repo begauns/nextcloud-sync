@@ -17,5 +17,9 @@ WORKDIR /media/nextcloud
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+# Repo-Config als Defaults ins Image
+COPY config /defaults-config
+
 # Standard-Entrypoint
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
