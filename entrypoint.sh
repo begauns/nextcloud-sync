@@ -7,7 +7,9 @@ log() {
   echo "$(date +"${LOG_DATE_FORMAT}") $*"
 }
 
-# Standard-Konfigurationsdateien in /config bereitstellen, falls nicht vorhanden
+########################################
+# Config-Defaults initialisieren
+########################################
 init_config_defaults() {
   if [ -d /config ]; then
     if [ ! -f /config/exclude.lst ] && [ -f /defaults-config/exclude.lst ]; then
@@ -17,6 +19,29 @@ init_config_defaults() {
     if [ ! -f /config/unsynced.lst ] && [ -f /defaults-config/unsynced.lst ]; then
       log "[ info entrypoint ]: initializing /config/unsynced.lst from image defaults"
       cp /defaults-config/unsynced.lst /config/unsynced.lst
+    fi
+
+    # Besitzer & Rechte nur setzen, wenn wir root sind
+    if [ "$(id -u)" = "0" ]; then
+      # Verzeichnis selbst
+      chown root:users /config || \
+        log "[ warn entrypoint ]: chown /config to root:users failed"
+      chmod 750 /config || \
+        log "[ warn entrypoint ]: chmod /config failed"
+
+      # Dateien, falls vorhanden
+      if [ -f /config/exclude.lst ]; then
+        chown root:users /config/exclude.lst || \
+          log "[ warn entrypoint ]: chown /config/exclude.lst failed"
+        chmod 640 /config/exclude.lst || \
+          log "[ warn entrypoint ]: chmod /config/exclude.lst failed"
+      fi
+      if [ -f /config/unsynced.lst ]; then
+        chown root:users /config/unsynced.lst || \
+          log "[ warn entrypoint ]: chown /config/unsynced.lst failed"
+        chmod 640 /config/unsynced.lst || \
+          log "[ warn entrypoint ]: chmod /config/unsynced.lst failed"
+      fi
     fi
   else
     log "[ warn entrypoint ]: /config directory not found (no config volume mounted?)"
