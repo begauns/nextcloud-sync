@@ -175,3 +175,4 @@ while true; do
     log "[ info entrypoint ]: [root] waiting ${INTERVAL}s before next sync..."
     sleep "${INTERVAL}"
 done
+
